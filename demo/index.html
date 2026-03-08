@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Like Counter Demo</title>
+  <style>
+    :root {
+      --primary: #ff4757;
+      --bg: #f1f2f6;
+      --card: #ffffff;
+      --text: #2f3542;
+      --secondary: #747d8c;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background: var(--card);
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 350px;
+    }
+    h1 { margin-bottom: 1rem; font-size: 1.5rem; }
+    .counter-container {
+      position: relative;
+      height: 100px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .counter {
+      font-size: 4rem;
+      font-weight: bold;
+      color: var(--primary);
+    }
+    button {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      font-size: 1.1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: transform 0.1s, background-color 0.2s;
+      width: 100%;
+    }
+    button:hover { background-color: #ff6b81; }
+    button:active { transform: scale(0.95); }
+    button:disabled { background-color: #ffa5a5; cursor: not-allowed; }
+    .status-container {
+      margin-top: 1rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+      min-height: 1.2rem;
+    }
+    .status {
+      font-size: 0.8rem;
+      color: var(--secondary);
+    }
+    .details {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid #eee;
+      text-align: left;
+      font-size: 0.85rem;
+    }
+    .details-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.4rem;
+    }
+    .details-label { color: var(--secondary); font-weight: 500; }
+    .details-value { font-family: monospace; background: #f8f9fa; padding: 2px 4px; border-radius: 3px; }
+
+    /* Loader styles */
+    .loader {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid var(--primary);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    .mini-loader {
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid var(--primary);
+      border-radius: 50%;
+      width: 12px;
+      height: 12px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .hidden { display: none !important; }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js",
+        "firebase/firestore": "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js",
+        "debounce": "https://esm.sh/debounce@3.0.0",
+        "rxjs": "https://esm.sh/rxjs@7.8.1",
+        "p-retry": "https://esm.sh/p-retry@7.1.1",
+        "@vajahath/personal-like-counter": "./dist/index.mjs"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="card">
+    <h1>Counter</h1>
+    
+    <div class="counter-container">
+      <div id="loader" class="loader"></div>
+      <div id="counter" class="counter hidden"></div>
+    </div>
+
+    <button id="likeBtn" disabled>❤️ Like</button>
+    
+    <div class="status-container">
+      <div id="syncLoader" class="mini-loader hidden"></div>
+      <div id="status" class="status">Initializing...</div>
+    </div>
+
+    <div class="details">
+      <div class="details-row">
+        <span class="details-label">Collection:</span>
+        <span class="details-value">demo</span>
+      </div>
+      <div class="details-row">
+        <span class="details-label">Document ID:</span>
+        <span class="details-value">test-doc</span>
+      </div>
+      <div class="details-row">
+        <span class="details-label">Field:</span>
+        <span class="details-value">likes</span>
+      </div>
+      <div class="details-row">
+        <span class="details-label">Engine:</span>
+        <span class="details-value">RxJS Observables</span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { LikeCounter } from '@vajahath/personal-like-counter';
+
+    const counterEl = document.getElementById('counter');
+    const loaderEl = document.getElementById('loader');
+    const likeBtn = document.getElementById('likeBtn');
+    const statusEl = document.getElementById('status');
+    const syncLoaderEl = document.getElementById('syncLoader');
+
+    let likeCounter;
+    let initialLoaded = false;
+
+    async function init() {
+      try {
+        likeCounter = new LikeCounter({
+          collection: 'demo',
+          doc: 'test-doc',
+          updateDebounceTime: 500
+        });
+
+        // Subscribe to the stream of likes
+        likeCounter.likes$.subscribe(count => {
+          counterEl.textContent = count;
+          
+          if (!initialLoaded) {
+            initialLoaded = true;
+            // Hide loader, show counter, enable button
+            loaderEl.classList.add('hidden');
+            counterEl.classList.remove('hidden');
+            likeBtn.disabled = false;
+            statusEl.textContent = 'Ready';
+          }
+        });
+
+        // Subscribe to syncing status
+        likeCounter.syncing$.subscribe(isSyncing => {
+          if (!initialLoaded) return;
+          
+          if (isSyncing) {
+            syncLoaderEl.classList.remove('hidden');
+            statusEl.textContent = 'Syncing...';
+          } else {
+            syncLoaderEl.classList.add('hidden');
+            statusEl.textContent = 'Synced';
+            
+            // Revert to "Ready" or timestamp after a moment
+            setTimeout(() => {
+              if (statusEl.textContent === 'Synced') {
+                statusEl.textContent = 'Last synced: ' + new Date().toLocaleTimeString();
+              }
+            }, 2000);
+          }
+        });
+
+      } catch (err) {
+        console.error('Initialization Error:', err);
+        statusEl.textContent = 'Init Failed: ' + err.message;
+        loaderEl.classList.add('hidden');
+      }
+    }
+
+    // Initial load
+    init();
+
+    // Increment locally and in background
+    likeBtn.addEventListener('click', () => {
+      if (!likeCounter) return;
+      likeCounter.incrementLike();
+    });
+  </script>
+</body>
+</html>
