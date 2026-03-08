@@ -30,11 +30,12 @@
     "prepublishOnly": "bun run build",
     "demo": "bun run build && mkdir -p demo/dist && cp -r dist/* demo/dist/ && bun x serve demo"
   },
-  "dependencies": {},
-  "peerDependencies": {
+  "dependencies": {
     "debounce": "^3.0.0",
+    "p-retry": "^7.1.1"
+  },
+  "peerDependencies": {
     "firebase": "^12.10.0",
-    "p-retry": "^7.1.1",
     "rxjs": "^7.8.2"
   },
   "devDependencies": {

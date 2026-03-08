@@ -13,8 +13,32 @@ A reactive, optimistic like counter utility for Firebase Firestore, powered by R
 
 ## Installation
 
+This package is hosted on the **GitHub Package Registry**. You need to configure your package manager to fetch `@vajahath` scoped packages from GitHub.
+
+### 1. Configure GitHub Package Registry
+
+Create or update an `.npmrc` file in your project root:
+
+```text
+@vajahath:registry=https://npm.pkg.github.com
+```
+
+### 2. Install the Package
+
 ```bash
-bun add @vajahath/personal-like-counter rxjs
+bun add @vajahath/personal-like-counter rxjs firebase
+```
+
+## Browser Usage (CDN)
+
+You can use the library directly in the browser via `esm.sh`.
+
+```html
+<script type="module">
+  import { LikeCounter } from 'https://esm.sh/gh/vajahath/personal-like-counter@[latest_tag]';
+  const counter = new LikeCounter({ doc: 'demo-doc' });
+  // ... rest of your logic
+</script>
 ```
 
 ## Usage
@@ -75,31 +99,6 @@ counter.incrementLike();
 
 // Or add a specific amount
 counter.incrementLike(5);
-```
-
-### 5. Browser Usage (CDN)
-
-You can use the library directly in the browser via `esm.sh`. Ensure you include an `importmap` for the dependencies.
-
-```html
-<script type="importmap">
-  {
-    "imports": {
-      "firebase/app": "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js",
-      "firebase/firestore": "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js",
-      "debounce": "https://esm.sh/debounce@3.0.0",
-      "rxjs": "https://esm.sh/rxjs@7.8.1",
-      "p-retry": "https://esm.sh/p-retry@7.1.1",
-      "@vajahath/personal-like-counter": "https://esm.sh/@vajahath/personal-like-counter"
-    }
-  }
-</script>
-
-<script type="module">
-  import { LikeCounter } from '@vajahath/personal-like-counter';
-  const counter = new LikeCounter({ doc: 'demo-doc' });
-  // ... rest of your logic
-</script>
 ```
 
 ## API Reference
