@@ -62,6 +62,13 @@ export class LikeCounter {
   }
 
   /**
+   * Returns a promise that resolves when the counter is fully initialized.
+   */
+  ready(): Promise<void> {
+    return this.initPromise;
+  }
+
+  /**
    * Returns an Observable stream of the current like count.
    * This includes real-time updates from Firestore AND immediate local increments.
    * It will not emit until the first value is received from Firestore or a local increment occurs.
@@ -108,10 +115,7 @@ export class LikeCounter {
     }
   }
 
-  private async setupFirestoreSubscription() {
-    // Wait for initialization to complete to have docRef
-    await this.initPromise;
-
+  private setupFirestoreSubscription() {
     if (!this.docRef) return;
 
     this.unsubscribe = onSnapshot(this.docRef, (docSnap) => {

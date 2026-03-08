@@ -26,7 +26,7 @@
     "build": "tsdown",
     "dev": "tsdown --watch",
     "test": "bun test",
-    "typecheck": "tsc",
+    "typecheck": "tsc --noEmit",
     "prepublishOnly": "bun run build",
     "demo": "bun run build && mkdir -p demo/dist && cp -r dist/* demo/dist/ && bun x serve demo"
   },

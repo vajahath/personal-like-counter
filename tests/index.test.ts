@@ -51,6 +51,7 @@ describe("LikeCounter", () => {
 
   test("should initialize with value from onSnapshot", async () => {
     const counter = new LikeCounter({ doc: "test-doc" });
+    await counter.ready();
     const count = await firstValueFrom(counter.likes$);
     
     expect(count).toBe(10);
@@ -59,6 +60,7 @@ describe("LikeCounter", () => {
 
   test("should optimistically increment like count and include lastUpdate", async () => {
     const counter = new LikeCounter({ doc: "test-doc" });
+    await counter.ready();
     
     // Initial state check
     expect(counter.currentLikes).toBe(10);
@@ -68,6 +70,9 @@ describe("LikeCounter", () => {
     
     // Local stream should update immediately
     expect(counter.currentLikes).toBe(11);
+    
+    // Wait for async syncToFirestore to complete
+    await new Promise(resolve => setTimeout(resolve, 0));
     
     // p-retry should have been called
     expect(mockPRetry).toHaveBeenCalled();
@@ -81,9 +86,15 @@ describe("LikeCounter", () => {
 
   test("should handle multiple local increments", async () => {
     const counter = new LikeCounter({ doc: "test-doc" });
+    await counter.ready();
     
     counter.incrementLike(2);
+    // Wait for first async syncToFirestore
+    await new Promise(resolve => setTimeout(resolve, 0));
+    
     counter.incrementLike(3);
+    // Wait for second async syncToFirestore
+    await new Promise(resolve => setTimeout(resolve, 0));
     
     expect(counter.currentLikes).toBe(15);
     expect(mockUpdateDoc).toHaveBeenCalledTimes(2);
@@ -91,15 +102,13 @@ describe("LikeCounter", () => {
 
   test("should track syncing status", async () => {
     const counter = new LikeCounter({ doc: "test-doc" });
+    await counter.ready();
     
     // Initial status should be false
     let isSyncing = await firstValueFrom(counter.syncing$);
     expect(isSyncing).toBe(false);
 
     // Call sync manually or via increment
-    // Since we mocked debounce and p-retry as immediate, it might be tricky to catch the 'true' state
-    // but we can definitely check that it ends up as false.
-    // We wrap it in a small timeout to ensure microtasks are processed.
     counter.incrementLike(1);
     
     // Wait for async syncToFirestore to complete

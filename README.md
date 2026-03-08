@@ -35,6 +35,9 @@ const counter = new LikeCounter({
     // ...
   }
 });
+
+// Optional: Wait for initialization (useful if you need currentLikes immediately)
+await counter.ready();
 ```
 
 ### 2. Monitor Like Counts
@@ -119,6 +122,7 @@ You can use the library directly in the browser via `esm.sh`. Ensure you include
 
 ### Methods
 
+- **`ready(): Promise<void>`**: Resolves when the counter is fully initialized and synced with Firestore.
 - **`incrementLike(count?: number)`**: Increments the count. Default `1`.
 - **`destroy()`**: Stops real-time listeners and cleans up resources.
 
