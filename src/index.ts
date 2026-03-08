@@ -12,54 +12,53 @@ interface LikeCounterConfig {
   firestore?: Firestore;
 }
 
-const DEFAULT_FIREBASE_CONFIG = {
-  apiKey: "AIzaSyC8mNKenUMmbSmJI4OWOXBTxKp8MqrWbsY",
-  authDomain: "mine-c47bb.firebaseapp.com",
-  databaseURL: "https://mine-c47bb.firebaseio.com",
-  projectId: "mine-c47bb",
-  storageBucket: "mine-c47bb.appspot.com",
-  messagingSenderId: "371296852237",
-  appId: "1:371296852237:web:df2fd43f94ee8c1adc3844",
-  measurementId: "G-F4XTSRGY4P"
-};
-
 export class LikeCounter {
-  private db: Firestore;
-  private docRef: DocumentReference;
+  private db?: Firestore;
+  private docRef?: DocumentReference;
   private pendingCount: number = 0;
   private debouncedSync: any;
   private likesSubject = new ReplaySubject<number>(1);
   private syncingSubject = new BehaviorSubject<boolean>(false);
   private _currentLikes: number = 0;
   private unsubscribe?: Unsubscribe;
+  private initPromise: Promise<void>;
 
-  constructor({
-    collection = "general",
-    doc: docId,
-    updateDebounceTime = 500, // Matches our 500ms (2/s) rate limit
-    firebaseConfig = DEFAULT_FIREBASE_CONFIG,
-    firestore
-  }: LikeCounterConfig) {
-
-    if (firestore) {
-      this.db = firestore;
-    } else {
-      const app: FirebaseApp = getApps().length === 0
-        ? initializeApp(firebaseConfig)
-        : getApp();
-      this.db = getFirestore(app);
-    }
-
-    this.docRef = doc(this.db, collection, docId);
-
-    // Set up real-time sync from Firestore
-    this.setupFirestoreSubscription();
+  constructor(config: LikeCounterConfig) {
+    const { updateDebounceTime = 500 } = config;
 
     // Create the debounced sync method
     this.debouncedSync = debounce(this.syncToFirestore.bind(this), updateDebounceTime);
 
     // Ensure we sync when the user leaves the page
     this.setupExitListeners();
+
+    // Start initialization asynchronously
+    this.initPromise = this.init(config);
+  }
+
+  private async init(config: LikeCounterConfig) {
+    const { collection = "general", doc: docId, firebaseConfig, firestore } = config;
+
+    if (firestore) {
+      this.db = firestore;
+    } else {
+      let finalConfig = firebaseConfig;
+      if (!finalConfig) {
+        // Lazy load the default config only if not provided
+        const { DEFAULT_FIREBASE_CONFIG } = await import("./default-config");
+        finalConfig = DEFAULT_FIREBASE_CONFIG;
+      }
+      
+      const app: FirebaseApp = getApps().length === 0
+        ? initializeApp(finalConfig)
+        : getApp();
+      this.db = getFirestore(app);
+    }
+
+    this.docRef = doc(this.db!, collection, docId);
+
+    // Set up real-time sync from Firestore
+    this.setupFirestoreSubscription();
   }
 
   /**
@@ -109,7 +108,12 @@ export class LikeCounter {
     }
   }
 
-  private setupFirestoreSubscription() {
+  private async setupFirestoreSubscription() {
+    // Wait for initialization to complete to have docRef
+    await this.initPromise;
+
+    if (!this.docRef) return;
+
     this.unsubscribe = onSnapshot(this.docRef, (docSnap) => {
       if (docSnap.exists()) {
         const serverLikes = docSnap.data().likes || 0;
@@ -132,10 +136,15 @@ export class LikeCounter {
   }
 
   private async syncToFirestore() {
+    // Wait for initialization to complete to have docRef
+    await this.initPromise;
+
     if (this.pendingCount <= 0) {
       this.syncingSubject.next(false);
       return;
     }
+
+    if (!this.docRef) return;
 
     const countToSync = this.pendingCount;
     this.pendingCount = 0; // Reset pending count before the async call to avoid double counting
@@ -145,7 +154,7 @@ export class LikeCounter {
       await pRetry(async () => {
         try {
           // Use updateDoc to restrict writes to pre-existing documents only
-          await updateDoc(this.docRef, {
+          await updateDoc(this.docRef!, {
             likes: increment(countToSync),
             lastUpdate: serverTimestamp()
           });
