@@ -1,4 +1,4 @@
-# @vajahath/personal-like-counter [![Release](https://github.com/vajahath/personal-like-counter/actions/workflows/release.yml/badge.svg)](https://github.com/vajahath/personal-like-counter/actions/workflows/release.yml) [![CI](https://github.com/vajahath/personal-like-counter/actions/workflows/ci.yml/badge.svg)](https://github.com/vajahath/personal-like-counter/actions/workflows/ci.yml)
+# @vajahath/personal-like-counter [![Release](https://github.com/vajahath/personal-like-counter/actions/workflows/release.yml/badge.svg)](https://github.com/vajahath/personal-like-counter/actions/workflows/release.yml) [![CI](https://github.com/vajahath/personal-like-counter/actions/workflows/ci.yml/badge.svg)](https://github.com/vajahath/personal-like-counter/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/@vaju/personal-like-counter)](https://www.npmjs.com/package/@vaju/personal-like-counter)
 
 A reactive, optimistic like counter utility for Firebase Firestore, powered by RxJS. This package handles real-time synchronization, debouncing, and automatic persistence with minimal configuration.
 
@@ -13,9 +13,23 @@ A reactive, optimistic like counter utility for Firebase Firestore, powered by R
 
 ## Installation
 
-This package is hosted on the **GitHub Package Registry**. You need to configure your package manager to fetch `@vajahath` scoped packages from GitHub.
+This package is published to both **npm** and **GitHub Package Registry**.
 
-### 1. Configure GitHub Package Registry
+### Option A: Install from npm (recommended)
+
+No additional configuration needed.
+
+```bash
+npm install @vaju/personal-like-counter rxjs firebase
+# or
+bun add @vaju/personal-like-counter rxjs firebase
+```
+
+### Option B: Install from GitHub Package Registry
+
+You need to configure your package manager to fetch `@vajahath` scoped packages from GitHub.
+
+**1. Configure the registry**
 
 Create or update an `.npmrc` file in your project root:
 
@@ -23,7 +37,14 @@ Create or update an `.npmrc` file in your project root:
 @vajahath:registry=https://npm.pkg.github.com
 ```
 
-### 2. Install the Package
+`bunfig.toml` (for Bun)
+
+```toml
+[install.scopes]
+"@vajahath" = "https://npm.pkg.github.com/"
+```
+
+**2. Install the package**
 
 ```bash
 bun add @vajahath/personal-like-counter rxjs firebase
@@ -46,7 +67,10 @@ You can use the library directly in the browser via `esm.sh`.
 ### 1. Initialize the Counter
 
 ```typescript
-import { LikeCounter } from "@vajahath/personal-like-counter";
+// If installed from npm:
+import { LikeCounter } from "@vaju/personal-like-counter";
+// If installed from GitHub Package Registry:
+// import { LikeCounter } from "@vajahath/personal-like-counter";
 
 const counter = new LikeCounter({
   doc: "my-post-id",
