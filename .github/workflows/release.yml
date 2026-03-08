@@ -54,7 +54,7 @@ jobs:
           path: dist/
 
       - name: Publish to GitHub Package Registry
-        run: npm publish
+        run: npm publish --ignore-scripts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -84,7 +84,7 @@ jobs:
           sed -i 's/"@vajahath\/personal-like-counter"/"@vaju\/personal-like-counter"/' package.json
 
       - name: Publish to npm Registry
-        run: npm publish --provenance --access public
+        run: npm publish --provenance --access public --ignore-scripts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
