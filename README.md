@@ -1,4 +1,4 @@
-# @vajahath/personal-like-counter
+# @vajahath/personal-like-counter [![Release](https://github.com/vajahath/personal-like-counter/actions/workflows/release.yml/badge.svg)](https://github.com/vajahath/personal-like-counter/actions/workflows/release.yml) [![CI](https://github.com/vajahath/personal-like-counter/actions/workflows/ci.yml/badge.svg)](https://github.com/vajahath/personal-like-counter/actions/workflows/ci.yml)
 
 A reactive, optimistic like counter utility for Firebase Firestore, powered by RxJS. This package handles real-time synchronization, debouncing, and automatic persistence with minimal configuration.
 
